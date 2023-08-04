@@ -50,7 +50,10 @@ public class SaveManager : MonoBehaviour {
         string path = Application.persistentDataPath + "/savefile.json";
         if (File.Exists(path)) {
             string j = File.ReadAllText(path);
-            data.highScore = JsonUtility.FromJson<SaveData>(j).highScore > highScore ? JsonUtility.FromJson<SaveData>(j).highScore : highScore;
+            data.highScore = 
+                (JsonUtility.FromJson<SaveData>(j).highScore > highScore) && (JsonUtility.FromJson<SaveData>(j).playerName == playerName) ?
+                JsonUtility.FromJson<SaveData>(j).highScore:
+                highScore;
         }
         else {
             data.highScore = highScore;
