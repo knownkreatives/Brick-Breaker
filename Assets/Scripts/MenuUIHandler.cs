@@ -19,6 +19,7 @@ public class MenuUIHandler : MonoBehaviour {
 
     public void SaveData() {
         SaveManager.Instance.SetPlayerName(playerNameInputText.text);
+        SaveManager.Instance.SetHighScore(0);
         SaveManager.Instance.Save();
     }
 
