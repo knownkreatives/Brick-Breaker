@@ -7,7 +7,6 @@ namespace TMPro.Examples
 
     public class VertexColorCycler : MonoBehaviour
     {
-        [SerializeField] Color32 [] colors;
 
         private TMP_Text m_TextComponent;
 
@@ -61,7 +60,7 @@ namespace TMPro.Examples
                 // Only change the vertex color if the text element is visible.
                 if (textInfo.characterInfo[currentCharacter].isVisible)
                 {
-                    c0 = colors [Random.Range(0,colors.Length)];
+                    c0 = new Color32((byte)Random.Range(0, 255), (byte)Random.Range(0, 255), (byte)Random.Range(0, 255), 255);
 
                     newVertexColors[vertexIndex + 0] = c0;
                     newVertexColors[vertexIndex + 1] = c0;
