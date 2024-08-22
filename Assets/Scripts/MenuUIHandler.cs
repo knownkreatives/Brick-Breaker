@@ -11,29 +11,50 @@ using UnityEditor;
 public class MenuUIHandler : MonoBehaviour {
     public TextMeshProUGUI playerNameText;
     public TextMeshProUGUI highScoreText;
+    public TextMeshProUGUI prevScoreText;
+    public TextMeshProUGUI clanNameText;
+    public TextMeshProUGUI clanStatsText;
+
     public TMP_InputField playerNameInputText;
+    public TMP_InputField clanNameInputText;
 
     void Awake() {
-        LoadNameAndScore();
+        LoadUserData();
     }
 
-    public void SaveData() {
-        SaveManager.Instance.SetPlayerName(playerNameInputText.text);
-        SaveManager.Instance.SetHighScore(0);
+    public void SaveUserData() {
+        SaveManager.Instance.Load(playerNameInputText.text);
+
+        SaveManager.Instance.PlayerName = playerNameInputText.text;
+        SaveManager.Instance.HighScore = SaveManager.Instance.HighScore;
+        SaveManager.Instance.PrevScore = SaveManager.Instance.PrevScore;
+        SaveManager.Instance.ClanName = clanNameInputText.text;
+
         SaveManager.Instance.Save();
     }
 
-    public void LoadNameAndScore() {
-        SaveManager.Instance.LoadData();
-        var playerName = SaveManager.Instance.GetPlayername();
-        var highScore = SaveManager.Instance.GetHighScore();
+    public void LoadUserData() {
+        SaveManager.Instance.Load(playerNameInputText.text);
+
+        string playerName = SaveManager.Instance.PlayerName;
+        int highScore = SaveManager.Instance.HighScore;
+        int prevScore = SaveManager.Instance.PrevScore;
+        string clanName = SaveManager.Instance.ClanName;
 
         playerNameText.text = $"Name: {playerName}";
         highScoreText.text = $"High Score: {highScore}";
+        prevScoreText.text = $"Previous Score: {prevScore}";
+        clanNameText.text = $"Clan: {clanName}";
+    }
+
+    public void ShowClanStats() {
+        string result = "";
+
+        clanStatsText.text = result;
     }
 
     public void Play() {
-        SceneManager.LoadScene(1);
+        SceneManager.LoadScene("Main");
     }
 
     public void Exit() {

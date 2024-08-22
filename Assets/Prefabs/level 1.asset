@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 854de9c0e2422a8458282aa383934052, type: 3}
+  m_Name: level 1
+  m_EditorClassIdentifier: 
+  brickPrefab: {fileID: 897975713663390409, guid: 63f25b9733d2bcd4fa2ff6de1264c739, type: 3}
+  formation:
+  - bricks:
+    - points: 1
+      xPosition: -2
+    - points: 1
+      xPosition: -1.5
+    - points: 1
+      xPosition: -1
+    - points: 1
+      xPosition: -0.5
+    yPosition: 2
+  - bricks:
+    - points: 1
+      xPosition: 0.5
+    - points: 1
+      xPosition: 1
+    - points: 1
+      xPosition: 1.5
+    - points: 1
+      xPosition: 2
+    yPosition: 2.5

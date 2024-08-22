@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using UnityEngine;
 using System.IO;
+using System;
+using Newtonsoft.Json;
 
 public class SaveManager : MonoBehaviour {
     public static SaveManager Instance {
@@ -17,70 +19,92 @@ public class SaveManager : MonoBehaviour {
         DontDestroyOnLoad(gameObject);
     }
 
-    string playerName;
-
-    public void SetPlayerName(string name) {
-        playerName = name; 
+    public string PlayerName {
+        get => n;
+        set => n = value;
     }
-
-    public string GetPlayername() {
-        return playerName;
+    string n;
+    public int HighScore {
+        get => hs;
+        set => hs = value > hs ? value : hs;
     }
-
-    int highScore;
-
-    public void SetHighScore(int h_score) {
-        highScore = h_score;
+    int hs;
+    public int PrevScore {
+        get => ps;
+        set => ps = value;
     }
-
-    public int GetHighScore() {
-        return highScore;
+    int ps;
+    public string ClanName {
+        get => cn;
+        set => cn = value;
     }
+    string cn;
 
-    [System.Serializable]
-    class SaveData {
-        public string playerName;
+    [Serializable]
+    class PlayerData {
+        public string name;
         public int highScore;
+        public int previousScore;
+        public string clanName;
+    }
+
+    class SaveData {
+        public PlayerData[] players;
     }
 
     public void Save() {
-        SaveData data = new SaveData();
-        data.playerName = playerName;
+        PlayerData p_data = new() {
+            name = PlayerName,
+            highScore = HighScore,
+            previousScore = PrevScore,
+            clanName = ClanName
+        };
 
-        string path = Application.persistentDataPath + "/savefile.json";
-        if (File.Exists(path)) {
-            string j = File.ReadAllText(path);
-            data.highScore = 
-                (JsonUtility.FromJson<SaveData>(j).highScore > highScore) && (JsonUtility.FromJson<SaveData>(j).playerName == playerName) ?
-                JsonUtility.FromJson<SaveData>(j).highScore:
-                highScore;
-        }
-        else {
-            data.highScore = highScore;
-        }
+        SaveData data = new() {
+            players = new PlayerData[] { p_data }
+        };
 
+        string path = Application.persistentDataPath + "/SaveFile.json";
 
-        string json = JsonUtility.ToJson(data);
+        string json = JsonConvert.SerializeObject(data);
 
-        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
+        File.WriteAllText(path, json);
 
-        Debug.Log(Application.persistentDataPath + "/savefile.json" + json);
+        Debug.Log(path + ":\n" + json);
     }
 
-    public void LoadData() {
-        string path = Application.persistentDataPath + "/savefile.json";
+    public void Load(string name) {
+        string path = Application.persistentDataPath + $"/SaveFile.json";
+
         if (File.Exists(path)) {
             string json = File.ReadAllText(path);
-            SaveData data = JsonUtility.FromJson<SaveData>(json);
+            var data = JsonConvert.DeserializeObject(json, typeof(SaveData));
 
-            playerName = data.playerName;
-            highScore = data.highScore;
+            // SaveData player = Array.Find(data, (x) => x.name == name);
+
+            //if (player != null) {
+            //    PlayerName = player.name;
+            //    HighScore = player.highScore;
+            //    PrevScore = player.previousScore;
+            //    ClanName = player.clanName;
+            //} else {
+            //    Debug.LogError(path + " does not contain player data");
+
+            //    PlayerName = "";
+            //    HighScore = 0;
+            //    PrevScore = 0;
+            //    ClanName = "";
+            //}
+
+            Debug.Log(data);
         }
         else {
             Debug.LogError(path + " does not exist");
 
-            playerName = "";
-            highScore = 0;
+            PlayerName = "";
+            HighScore = 0;
+            PrevScore = 0;
+            ClanName = "";
         }
     }
 }
