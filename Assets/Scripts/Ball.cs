@@ -1,55 +1,106 @@
 using UnityEngine;
 
 public class Ball : MonoBehaviour {
-    [Range(0, 1)]
+    [Min(0)]
     public float accelerationPerBounce = 0.01f;
     [Min(0.01f)]
-    public float maxVelocity = 3;
+    public float maxSpeed = 3;
+    [Min(0.01f)]
+    public float startSpeed = 2;
+    [Min(0)]
+    public float minSpeed = 0.1f;
 
-    Vector3 originalPosition;
+    public float yOffset = 0.4f;
 
-    private Rigidbody m_Rigidbody;
+    private Rigidbody rb;
+
+    public bool IsMoving {
+        get; private set;
+    } = false;
+    public bool IsDead {
+        get; private set;
+    } = false;
 
     void Start() {
-        originalPosition = transform.position; 
-        m_Rigidbody = GetComponent<Rigidbody>();
+        rb = GetComponent<Rigidbody>();
     }
 
+    float random1;
+    Vector3 velocity;
 
-    private void OnCollisionExit(Collision other) {
-        var velocity = m_Rigidbody.linearVelocity;
+    private void FixedUpdate() {
+        random1 = Random.Range(-1.0f, 1.0f);
+        velocity = rb.linearVelocity;
+    }
 
-        //check if we are not going totally vertically as this would lead to being stuck, we add a little vertical force
-        if (Vector3.Dot(velocity.normalized, Vector3.up) < 1f) {
-            velocity += velocity.y > 0 ? Vector3.up * 0.5f : Vector3.down * 0.5f;
+    private void OnCollisionEnter2D(Collision2D other) {
+        if (other.gameObject.CompareTag("Untagged") || other.gameObject.CompareTag("Brick")) {
+            NormalBounce(other.contacts [0].normal);
+            Accelerate();
+        } else if (other.gameObject.CompareTag("Player")) {
+            NormalBounce(other.contacts [0].normal);
+            Accelerate();
+        } else if (other.gameObject.CompareTag("DeadZone")) {
+            IsDead = true;
+            StopMoving();
         }
 
-        // after a collision we accelerate a bit
+        ClampSpeed();
+    }
+
+    void NormalBounce(Vector3 normal) {
+        velocity = Vector3.Reflect(velocity, normal) * velocity.magnitude;
+
+        rb.linearVelocity = velocity;
+    }
+
+    void Accelerate() {
         velocity += velocity.normalized * accelerationPerBounce;
 
-        // max velocity
-        if (velocity.magnitude > maxVelocity) {
-            velocity = velocity.normalized * maxVelocity;
+        rb.linearVelocity = velocity;
+    }
+    void ClampSpeed() {
+        if (!IsMoving)
+            return;
+
+        if (velocity.magnitude > maxSpeed) {
+            velocity = velocity.normalized * maxSpeed;
+        } else if (velocity.magnitude < minSpeed) {
+            velocity += velocity.normalized * random1;
         }
 
-        m_Rigidbody.linearVelocity = velocity;
+        rb.linearVelocity = velocity;
+    }
+
+    public void ResetDead() {
+        IsDead = false;
     }
 
     public void StartMovingInRandomDirection() {
-        float randomDirection = Random.Range(-1, 1);
-        Vector3 forceDir = new (randomDirection, 1, 0);
+        IsMoving = true;
 
-        forceDir.Normalize();
+        Vector3 forceDir = new(random1, 1);
 
-        m_Rigidbody.AddForce(forceDir * 2.0f, ForceMode.VelocityChange);
+        rb.AddForce(forceDir.normalized * startSpeed, ForceMode.Impulse);
     }
-
     public void StopMoving() {
-        m_Rigidbody.linearVelocity = Vector3.zero;
+        IsMoving = false;
+
+        rb.linearVelocity = Vector3.zero;
     }
 
-    public void ResetPosition() {
-        transform.SetParent(GameObject.Find("Paddle").transform);
-        transform.position = m_Rigidbody.position;
+    public void ResetToPaddleParent() {
+        transform.SetParent(GameObject.FindGameObjectsWithTag("Player") [0].transform);
+        transform.localPosition = new Vector3(0, yOffset, 0);
+    }
+    public void DetachFromPaddleParent() {
+        transform.SetParent(GameObject.FindGameObjectsWithTag("Player") [0].transform.parent);
+    }
+
+    private void OnDrawGizmos() {
+        Gizmos.color = Color.green;
+
+        if (rb != null)
+            Gizmos.DrawLine(transform.position, transform.position + rb.linearVelocity);
     }
 }

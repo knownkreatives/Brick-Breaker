@@ -3,58 +3,40 @@ using UnityEngine;
 using UnityEngine.Events;
 
 public class Brick : MonoBehaviour {
+    [HideInInspector]
     public UnityEvent<int> onDestroyed;
-    
-    public int PointValue;
-    private int maxHealth;
-    private int currentHealth;
 
-    void Start() {
-        var renderer = GetComponentInChildren<Renderer>();
+    int pointsOnDestroy;
+    int currentHealth;
 
-        MaterialPropertyBlock block = new();
-        switch (PointValue) {
-            case 1:
-            block.SetColor("_BaseColor", Color.white);
-            maxHealth = 0;
-            break;
-            case 2:
-            block.SetColor("_BaseColor", Color.green);
-            maxHealth = 1;
-            break;
-            case 5:
-            block.SetColor("_BaseColor", Color.blue);
-            maxHealth = 2;
-            break;
-            case 10:
-            block.SetColor("_BaseColor", new Color(0.45f, 0, 0.90f));
-            maxHealth = 3;
-            break;
-            case 20:
-            block.SetColor("_BaseColor", Color.yellow);
-            maxHealth = 4;
-            break;
-            default:
-            block.SetColor("_BaseColor", Color.gray);
-            maxHealth = 0;
-            break;
+    Renderer rend;
+
+    public void SetBrickData(BrickPallet pallet) {
+        rend = GetComponent<Renderer>();
+
+        if (pallet == null) {
+            rend.sharedMaterial.color = Color.red;
+
+            pointsOnDestroy = 0;
+            currentHealth = 0;
+        } else {
+            rend.sharedMaterial.color = pallet.col;
+
+            pointsOnDestroy = pallet.points;
+            currentHealth = pallet.maxHealth;
         }
-
-        currentHealth = maxHealth;
-
-        renderer.SetPropertyBlock(block);
     }
 
     private void OnCollisionExit(Collision other) {
-        if (currentHealth < 1) {
-            onDestroyed.Invoke(PointValue);
+        if (other.gameObject.CompareTag("Ball")) {
+            currentHealth--;
+        }
+
+        if (currentHealth <= 0) {
+            onDestroyed?.Invoke(pointsOnDestroy);
 
             //slight delay to be sure the ball have time to bounce
             Destroy(gameObject, 0.2f);
-        } else {
-            currentHealth--;
-
-            transform.localScale = new Vector3(transform.localScale.x * (currentHealth / maxHealth) + 0.1f, transform.localScale.y, transform.localScale.z);
         }
     }
 }

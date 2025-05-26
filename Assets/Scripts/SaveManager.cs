@@ -3,6 +3,8 @@ using UnityEngine;
 using System.IO;
 using System;
 using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Linq;
 
 public class SaveManager : MonoBehaviour {
     public static SaveManager Instance {
@@ -19,92 +21,105 @@ public class SaveManager : MonoBehaviour {
         DontDestroyOnLoad(gameObject);
     }
 
-    public string PlayerName {
-        get => n;
-        set => n = value;
-    }
-    string n;
-    public int HighScore {
-        get => hs;
-        set => hs = value > hs ? value : hs;
-    }
-    int hs;
-    public int PrevScore {
-        get => ps;
-        set => ps = value;
-    }
-    int ps;
-    public string ClanName {
-        get => cn;
-        set => cn = value;
-    }
-    string cn;
+    public void SavePlayer(string setpath, PlayerData data) {
+        string fullpath = Application.persistentDataPath + $"/{setpath}/{data.Name}.json";
 
-    [Serializable]
-    class PlayerData {
-        public string name;
-        public int highScore;
-        public int previousScore;
-        public string clanName;
+        File.WriteAllText(fullpath, JsonConvert.SerializeObject(data));
+
+        Debug.Log($"{fullpath}:\n\t{JsonConvert.SerializeObject(data)}");
     }
 
-    class SaveData {
-        public PlayerData[] players;
-    }
+    public PlayerData LoadPlayer(string getpath, string name) {
+        string fullpath = Application.persistentDataPath + $"/{getpath}/{name}.json";
 
-    public void Save() {
-        PlayerData p_data = new() {
-            name = PlayerName,
-            highScore = HighScore,
-            previousScore = PrevScore,
-            clanName = ClanName
-        };
+        if (File.Exists(fullpath)) {
+            PlayerData data = (PlayerData)JsonConvert.DeserializeObject(File.ReadAllText(fullpath), typeof(PlayerData));
 
-        SaveData data = new() {
-            players = new PlayerData[] { p_data }
-        };
+            Debug.Log($"{fullpath}:\n\t{data}");
 
-        string path = Application.persistentDataPath + "/SaveFile.json";
-
-        string json = JsonConvert.SerializeObject(data);
-
-        File.WriteAllText(path, json);
-
-        Debug.Log(path + ":\n" + json);
-    }
-
-    public void Load(string name) {
-        string path = Application.persistentDataPath + $"/SaveFile.json";
-
-        if (File.Exists(path)) {
-            string json = File.ReadAllText(path);
-            var data = JsonConvert.DeserializeObject(json, typeof(SaveData));
-
-            // SaveData player = Array.Find(data, (x) => x.name == name);
-
-            //if (player != null) {
-            //    PlayerName = player.name;
-            //    HighScore = player.highScore;
-            //    PrevScore = player.previousScore;
-            //    ClanName = player.clanName;
-            //} else {
-            //    Debug.LogError(path + " does not contain player data");
-
-            //    PlayerName = "";
-            //    HighScore = 0;
-            //    PrevScore = 0;
-            //    ClanName = "";
-            //}
-
-            Debug.Log(data);
+            return data;
         }
-        else {
-            Debug.LogError(path + " does not exist");
 
-            PlayerName = "";
-            HighScore = 0;
-            PrevScore = 0;
-            ClanName = "";
+        return null;
+    }
+
+    public void SavePlayers(string setpath, SaveData data) {
+        foreach (var item in data) {
+            SavePlayer(setpath, item);
         }
+    }
+
+    public SaveData LoadPlayers(string getpath) {
+        SaveData data = new();
+
+        string fullpath = Application.persistentDataPath + $"/{getpath}";
+        string [] files = Directory.GetFiles(fullpath, "*.json");
+
+        foreach (var file in files) {
+            data.Add(LoadPlayer(getpath, Path.GetFileName(file)));
+        }
+
+        data.OrderByDescending(data => data.HighScore);
+
+        return data;
+    }
+}
+
+[Serializable]
+public class PlayerData {
+    public string @Name { get; set; }
+    public int HighScore { get => highscore; set => highscore = value > highscore ? highscore : value; } int highscore;
+    public int PreviousScore { get; set; }
+    public string ClanName { get; set; }
+
+    public PlayerData() {
+
+    }
+
+    public PlayerData(string name, int highScore) {
+        @Name = name;
+        HighScore = highScore;
+        PreviousScore = 0;
+        ClanName = "";
+    }
+}
+
+public class SaveData : ICollection<PlayerData> {
+    readonly PlayerData [] _players;
+
+    public int Count => _players.Length;
+
+    public bool IsReadOnly => _players.IsReadOnly;
+
+    public void Add(PlayerData item) {
+        if (item == null) throw new ArgumentNullException("item");
+        _players.Append(item);
+    }
+
+    public void Clear() {
+        _players.ToList().Clear();
+    }
+
+    public bool Contains(PlayerData item) {
+        if (item == null) throw new ArgumentNullException("item");
+        return _players.Contains(item);
+    }
+
+    public void CopyTo(PlayerData [] array, int arrayIndex) {
+        if (array == null) throw new ArgumentNullException("array");
+        _players.CopyTo(array, arrayIndex);
+    }
+
+    public IEnumerator<PlayerData> GetEnumerator() {
+        return _players.AsEnumerable().GetEnumerator();
+    }
+
+    public bool Remove(PlayerData item) {
+        if (item == null) throw new ArgumentNullException("item");
+        return _players.ToList().Remove(item);
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() {
+        return GetEnumerator();
     }
 }
